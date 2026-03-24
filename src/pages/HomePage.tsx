@@ -2,11 +2,10 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowLeft, Gift, Sparkles } from "lucide-react";
-import heroBg from "@/assets/Screenshot 2026-03-24 181145.png";
+import { ArrowLeft, Gift, ImageIcon, Sparkles } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { useStore } from "@/contexts/StoreContext";
-import { boxImages } from "@/data/images";
+import { resolveBoxImage } from "@/data/images";
 import { formatPrice, calculateFinalPrice, getDiscountLabel } from "@/lib/formatPrice";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -43,8 +42,8 @@ const HomePage = () => {
       {/* Hero */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="صيدلية البلقاء" className="w-full h-full object-cover" width={1920} height={1080} />
-          <div className="absolute inset-0 bg-gradient-to-l from-background/95 via-background/70 to-transparent" />
+          <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,hsl(340_100%_95%)_0%,transparent_40%),radial-gradient(circle_at_80%_10%,hsl(18_100%_92%)_0%,transparent_35%),linear-gradient(120deg,hsl(340_65%_95%)_0%,hsl(0_0%_100%)_55%,hsl(340_40%_97%)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-l from-background/92 via-background/55 to-transparent" />
         </div>
         <div className="container relative z-10 py-20">
           <div className="max-w-lg">
@@ -98,10 +97,17 @@ const HomePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {boxes.map((box) => {
             const fp = calculateFinalPrice(box.price, box.hasDiscount, box.discountType, box.discountValue);
+            const image = resolveBoxImage(box);
             return (
               <div key={box.id} className="anim-item bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow">
                 <div className="relative aspect-[4/3] overflow-hidden bg-pink-light">
-                  <img src={boxImages[box.id] || box.image || ""} alt={box.name} className="w-full h-full object-cover" loading="lazy" />
+                  {image ? (
+                    <img src={image} alt={box.name} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <ImageIcon className="h-10 w-10 opacity-50" />
+                    </div>
+                  )}
                   {box.hasDiscount && box.discountType && box.discountValue && (
                     <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
                       {getDiscountLabel(box.discountType, box.discountValue)}

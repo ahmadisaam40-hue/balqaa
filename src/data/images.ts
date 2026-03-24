@@ -1,21 +1,20 @@
-import logoImage from "@/assets/Screenshot 2026-03-24 181145.png";
 import type { Box, Product } from "@/data/products";
 
 export const productImages: Record<string, string> = {
-  "1": logoImage,
-  "2": logoImage,
-  "3": logoImage,
-  "4": logoImage,
-  "5": logoImage,
-  "6": logoImage,
-  "7": logoImage,
-  "8": logoImage,
+  "1": "",
+  "2": "",
+  "3": "",
+  "4": "",
+  "5": "",
+  "6": "",
+  "7": "",
+  "8": "",
 };
 
 export const boxImages: Record<string, string> = {
-  "b1": logoImage,
-  "b2": logoImage,
-  "b3": logoImage,
+  "b1": "",
+  "b2": "",
+  "b3": "",
 };
 
 export const resolveProductImage = (product: Pick<Product, "id" | "image">) => {
