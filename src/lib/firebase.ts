@@ -31,13 +31,20 @@ if (missingRequiredKeys.length > 0) {
   );
 }
 
-export const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(firebaseApp);
-export const db = getFirestore(firebaseApp);
-export const storage = getStorage(firebaseApp);
+const hasRequiredConfig = missingRequiredKeys.length === 0;
+
+export const firebaseApp = hasRequiredConfig
+  ? getApps().length > 0
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null;
+
+export const auth = firebaseApp ? getAuth(firebaseApp) : null;
+export const db = firebaseApp ? getFirestore(firebaseApp) : null;
+export const storage = firebaseApp ? getStorage(firebaseApp) : null;
 
 export const initFirebaseAnalytics = async () => {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !firebaseApp) {
     return null;
   }
 
