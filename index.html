@@ -8,6 +8,16 @@
     <meta property="og:title" content="صيدلية البلقاء" />
     <meta property="og:description" content="مستحضرات تجميل وعناية بالبشرة وعطور فاخرة" />
     <meta property="og:type" content="website" />
+    <!-- GitHub Pages SPA redirect handler -->
+    <script>
+      (function(){
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
