@@ -75,6 +75,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ),
           );
           await setDoc(seedRef, { productsSeeded: true }, { merge: true });
+        } else if (!isSeeded && !serverSnapshot.empty) {
+          // Existing projects may already have products without the seed marker.
+          await setDoc(seedRef, { productsSeeded: true }, { merge: true });
         }
       } catch (error) {
         console.error("Failed to initialize Firestore products", error);
@@ -125,6 +128,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ),
           );
           await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
+        } else if (!isSeeded && !serverSnapshot.empty) {
+          await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
         }
       } catch (error) {
         console.error("Failed to initialize Firestore boxes", error);
@@ -174,6 +179,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               setDoc(doc(categoriesRef, category.id), toFirestorePayload(category), { merge: true }),
             ),
           );
+          await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
+        } else if (!isSeeded && !serverSnapshot.empty) {
           await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
         }
       } catch (error) {
