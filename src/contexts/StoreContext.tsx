@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Product, Box, products as defaultProducts, boxes as defaultBoxes, categories as defaultCategoriesConst } from "@/data/products";
 import { db } from "@/lib/firebase";
-import { collection, deleteDoc, doc, getDoc, getDocsFromServer, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocsFromServer, onSnapshot, setDoc } from "firebase/firestore";
 
 export interface Order {
   id: string;
@@ -60,60 +60,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const productsRef = collection(db, "products");
     let isMounted = true;
-    let unsubscribe = () => {};
 
-    const initialize = async () => {
+    // First, check if collection is empty and seed if needed
+    const seedIfNeeded = async () => {
       try {
-        const seedRef = doc(db, "__meta", "seed");
-        const seedDoc = await getDoc(seedRef);
-        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.productsSeeded);
         const serverSnapshot = await getDocsFromServer(productsRef);
-        console.log("[Products] Seed marker exists:", seedDoc.exists());
-        console.log("[Products] Is seeded:", isSeeded);
-        console.log("[Products] Server snapshot empty:", serverSnapshot.empty);
-        console.log("[Products] Server docs count:", serverSnapshot.size);
-        if (!isSeeded && serverSnapshot.empty) {
-          console.log("[Products] Seeding default products...");
-          await Promise.all(
+        console.log("[Products] Server has", serverSnapshot.size, "products");
+        
+        // Only seed if collection is completely empty
+        if (serverSnapshot.empty) {
+          console.log("[Products] Collection empty, seeding defaults...");
+          const seedResults = await Promise.allSettled(
             defaultProducts.map((product) =>
               setDoc(doc(productsRef, product.id), toFirestorePayload(product), { merge: true }),
             ),
           );
-          await setDoc(seedRef, { productsSeeded: true }, { merge: true });
-          console.log("[Products] Seeding complete, seed marker written");
-        } else if (!isSeeded && !serverSnapshot.empty) {
-          // Existing projects may already have products without the seed marker.
-          console.log("[Products] Writing seed marker for existing data");
-          await setDoc(seedRef, { productsSeeded: true }, { merge: true });
+          const succeeded = seedResults.filter(r => r.status === "fulfilled").length;
+          console.log("[Products] Seeded", succeeded, "products");
         } else {
-          console.log("[Products] Already seeded, skipping initialization");
+          console.log("[Products] Collection not empty, using existing data");
         }
       } catch (error) {
-        console.error("Failed to initialize Firestore products", error);
+        console.error("[Products] Failed to check/seed collection", error);
       }
+    };
 
+    // Seed then subscribe
+    seedIfNeeded().then(() => {
       if (!isMounted) return;
-
-      unsubscribe = onSnapshot(
+      
+      const unsubscribe = onSnapshot(
         productsRef,
         (snapshot) => {
           const remoteProducts = snapshot.docs.map((item) => ({
             id: item.id,
             ...(item.data() as Omit<Product, "id">),
           }));
+          console.log("[Products] onSnapshot received", remoteProducts.length, "products");
           setProducts(remoteProducts);
         },
         (error) => {
-          console.error("Failed to subscribe to Firestore products", error);
+          console.error("[Products] onSnapshot error", error);
         },
       );
-    };
 
-    initialize();
+      return unsubscribe;
+    });
 
     return () => {
       isMounted = false;
-      unsubscribe();
     };
   }, []);
 
@@ -122,59 +117,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const boxesRef = collection(db, "boxes");
     let isMounted = true;
-    let unsubscribe = () => {};
 
-    const initialize = async () => {
+    // First, check if collection is empty and seed if needed
+    const seedIfNeeded = async () => {
       try {
-        const seedRef = doc(db, "__meta", "seed");
-        const seedDoc = await getDoc(seedRef);
-        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.boxesSeeded);
         const serverSnapshot = await getDocsFromServer(boxesRef);
-        console.log("[Boxes] Seed marker exists:", seedDoc.exists());
-        console.log("[Boxes] Is seeded:", isSeeded);
-        console.log("[Boxes] Server snapshot empty:", serverSnapshot.empty);
-        console.log("[Boxes] Server docs count:", serverSnapshot.size);
-        if (!isSeeded && serverSnapshot.empty) {
-          console.log("[Boxes] Seeding default boxes...");
-          await Promise.all(
+        console.log("[Boxes] Server has", serverSnapshot.size, "boxes");
+        
+        // Only seed if collection is completely empty
+        if (serverSnapshot.empty) {
+          console.log("[Boxes] Collection empty, seeding defaults...");
+          const seedResults = await Promise.allSettled(
             defaultBoxes.map((box) =>
               setDoc(doc(boxesRef, box.id), toFirestorePayload(box), { merge: true }),
             ),
           );
-          await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
-          console.log("[Boxes] Seeding complete, seed marker written");
-        } else if (!isSeeded && !serverSnapshot.empty) {
-          console.log("[Boxes] Writing seed marker for existing data");
-          await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
+          const succeeded = seedResults.filter(r => r.status === "fulfilled").length;
+          console.log("[Boxes] Seeded", succeeded, "boxes");
         } else {
-          console.log("[Boxes] Already seeded, skipping initialization");
+          console.log("[Boxes] Collection not empty, using existing data");
         }
       } catch (error) {
-        console.error("Failed to initialize Firestore boxes", error);
+        console.error("[Boxes] Failed to check/seed collection", error);
       }
+    };
 
+    // Seed then subscribe
+    seedIfNeeded().then(() => {
       if (!isMounted) return;
-
-      unsubscribe = onSnapshot(
+      
+      const unsubscribe = onSnapshot(
         boxesRef,
         (snapshot) => {
           const remoteBoxes = snapshot.docs.map((item) => ({
             id: item.id,
             ...(item.data() as Omit<Box, "id">),
           }));
+          console.log("[Boxes] onSnapshot received", remoteBoxes.length, "boxes");
           setBoxes(remoteBoxes);
         },
         (error) => {
-          console.error("Failed to subscribe to Firestore boxes", error);
+          console.error("[Boxes] onSnapshot error", error);
         },
       );
-    };
 
-    initialize();
+      return unsubscribe;
+    });
 
     return () => {
       isMounted = false;
-      unsubscribe();
     };
   }, []);
 
@@ -183,59 +174,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const categoriesRef = collection(db, "categories");
     let isMounted = true;
-    let unsubscribe = () => {};
 
-    const initialize = async () => {
+    // First, check if collection is empty and seed if needed
+    const seedIfNeeded = async () => {
       try {
-        const seedRef = doc(db, "__meta", "seed");
-        const seedDoc = await getDoc(seedRef);
-        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.categoriesSeeded);
         const serverSnapshot = await getDocsFromServer(categoriesRef);
-        console.log("[Categories] Seed marker exists:", seedDoc.exists());
-        console.log("[Categories] Is seeded:", isSeeded);
-        console.log("[Categories] Server snapshot empty:", serverSnapshot.empty);
-        console.log("[Categories] Server docs count:", serverSnapshot.size);
-        if (!isSeeded && serverSnapshot.empty) {
-          console.log("[Categories] Seeding default categories...");
-          await Promise.all(
+        console.log("[Categories] Server has", serverSnapshot.size, "categories");
+        
+        // Only seed if collection is completely empty
+        if (serverSnapshot.empty) {
+          console.log("[Categories] Collection empty, seeding defaults...");
+          const seedResults = await Promise.allSettled(
             defaultCategories.map((category) =>
               setDoc(doc(categoriesRef, category.id), toFirestorePayload(category), { merge: true }),
             ),
           );
-          await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
-          console.log("[Categories] Seeding complete, seed marker written");
-        } else if (!isSeeded && !serverSnapshot.empty) {
-          console.log("[Categories] Writing seed marker for existing data");
-          await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
+          const succeeded = seedResults.filter(r => r.status === "fulfilled").length;
+          console.log("[Categories] Seeded", succeeded, "categories");
         } else {
-          console.log("[Categories] Already seeded, skipping initialization");
+          console.log("[Categories] Collection not empty, using existing data");
         }
       } catch (error) {
-        console.error("Failed to initialize Firestore categories", error);
+        console.error("[Categories] Failed to check/seed collection", error);
       }
+    };
 
+    // Seed then subscribe
+    seedIfNeeded().then(() => {
       if (!isMounted) return;
-
-      unsubscribe = onSnapshot(
+      
+      const unsubscribe = onSnapshot(
         categoriesRef,
         (snapshot) => {
           const remoteCategories = snapshot.docs.map((item) => ({
             id: item.id,
             ...(item.data() as Omit<Category, "id">),
           }));
+          console.log("[Categories] onSnapshot received", remoteCategories.length, "categories");
           setCategories(remoteCategories);
         },
         (error) => {
-          console.error("Failed to subscribe to Firestore categories", error);
+          console.error("[Categories] onSnapshot error", error);
         },
       );
-    };
 
-    initialize();
+      return unsubscribe;
+    });
 
     return () => {
       isMounted = false;
-      unsubscribe();
     };
   }, []);
 
