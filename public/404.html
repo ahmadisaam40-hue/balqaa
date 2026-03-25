@@ -3,8 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <script>
-      sessionStorage.redirect = location.href;
+      // Store the requested path
+      const path = location.pathname.replace('/balqaa', '');
+      sessionStorage.redirect = path;
     </script>
+    <!-- Redirect to index.html while preserving the path -->
     <meta http-equiv="refresh" content="0;URL='/balqaa/'" />
   </head>
+  <body>
+    Redirecting...
+  </body>
 </html>
