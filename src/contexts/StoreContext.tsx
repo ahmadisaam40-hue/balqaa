@@ -68,16 +68,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const seedDoc = await getDoc(seedRef);
         const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.productsSeeded);
         const serverSnapshot = await getDocsFromServer(productsRef);
+        console.log("[Products] Seed marker exists:", seedDoc.exists());
+        console.log("[Products] Is seeded:", isSeeded);
+        console.log("[Products] Server snapshot empty:", serverSnapshot.empty);
+        console.log("[Products] Server docs count:", serverSnapshot.size);
         if (!isSeeded && serverSnapshot.empty) {
+          console.log("[Products] Seeding default products...");
           await Promise.all(
             defaultProducts.map((product) =>
               setDoc(doc(productsRef, product.id), toFirestorePayload(product), { merge: true }),
             ),
           );
           await setDoc(seedRef, { productsSeeded: true }, { merge: true });
+          console.log("[Products] Seeding complete, seed marker written");
         } else if (!isSeeded && !serverSnapshot.empty) {
           // Existing projects may already have products without the seed marker.
+          console.log("[Products] Writing seed marker for existing data");
           await setDoc(seedRef, { productsSeeded: true }, { merge: true });
+        } else {
+          console.log("[Products] Already seeded, skipping initialization");
         }
       } catch (error) {
         console.error("Failed to initialize Firestore products", error);
@@ -121,15 +130,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const seedDoc = await getDoc(seedRef);
         const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.boxesSeeded);
         const serverSnapshot = await getDocsFromServer(boxesRef);
+        console.log("[Boxes] Seed marker exists:", seedDoc.exists());
+        console.log("[Boxes] Is seeded:", isSeeded);
+        console.log("[Boxes] Server snapshot empty:", serverSnapshot.empty);
+        console.log("[Boxes] Server docs count:", serverSnapshot.size);
         if (!isSeeded && serverSnapshot.empty) {
+          console.log("[Boxes] Seeding default boxes...");
           await Promise.all(
             defaultBoxes.map((box) =>
               setDoc(doc(boxesRef, box.id), toFirestorePayload(box), { merge: true }),
             ),
           );
           await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
+          console.log("[Boxes] Seeding complete, seed marker written");
         } else if (!isSeeded && !serverSnapshot.empty) {
+          console.log("[Boxes] Writing seed marker for existing data");
           await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
+        } else {
+          console.log("[Boxes] Already seeded, skipping initialization");
         }
       } catch (error) {
         console.error("Failed to initialize Firestore boxes", error);
@@ -173,15 +191,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const seedDoc = await getDoc(seedRef);
         const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.categoriesSeeded);
         const serverSnapshot = await getDocsFromServer(categoriesRef);
+        console.log("[Categories] Seed marker exists:", seedDoc.exists());
+        console.log("[Categories] Is seeded:", isSeeded);
+        console.log("[Categories] Server snapshot empty:", serverSnapshot.empty);
+        console.log("[Categories] Server docs count:", serverSnapshot.size);
         if (!isSeeded && serverSnapshot.empty) {
+          console.log("[Categories] Seeding default categories...");
           await Promise.all(
             defaultCategories.map((category) =>
               setDoc(doc(categoriesRef, category.id), toFirestorePayload(category), { merge: true }),
             ),
           );
           await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
+          console.log("[Categories] Seeding complete, seed marker written");
         } else if (!isSeeded && !serverSnapshot.empty) {
+          console.log("[Categories] Writing seed marker for existing data");
           await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
+        } else {
+          console.log("[Categories] Already seeded, skipping initialization");
         }
       } catch (error) {
         console.error("Failed to initialize Firestore categories", error);
