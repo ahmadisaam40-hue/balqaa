@@ -4,12 +4,20 @@ import { toast } from "sonner";
 
 const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD;
 
+console.log("[AdminLoginPage] ADMIN_PASS defined:", !!ADMIN_PASS);
+console.log("[AdminLoginPage] ADMIN_PASS value:", ADMIN_PASS);
+
 const AdminLoginPage = ({ onLogin }: { onLogin: () => void }) => {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
 
+  console.log("[AdminLoginPage] Component rendered");
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[AdminLoginPage] Form submitted");
+    console.log("[AdminLoginPage] Password match:", password === ADMIN_PASS);
+    
     if (!ADMIN_PASS) {
       toast.error("لم يتم إعداد كلمة مرور لوحة التحكم");
       return;

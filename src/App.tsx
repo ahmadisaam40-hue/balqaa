@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { StoreProvider } from "@/contexts/StoreContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import IntroOverlay from "@/components/IntroOverlay";
 import Navbar from "@/components/Navbar";
 import CartPanel from "@/components/CartPanel";
@@ -25,57 +26,63 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 const adminEnabled = import.meta.env.VITE_ENABLE_ADMIN === "true";
 
+console.log("[App] Admin enabled:", adminEnabled);
+console.log("[App] VITE_ENABLE_ADMIN env:", import.meta.env.VITE_ENABLE_ADMIN);
+console.log("[App] Base URL:", import.meta.env.BASE_URL);
+
 const App = () => {
   const [introComplete, setIntroComplete] = useState(false);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <StoreProvider>
-          <CartProvider>
-            <Sonner position="top-center" dir="rtl" />
-            <BrowserRouter basename={import.meta.env.BASE_URL}>
-              <Routes>
-                {/* Admin Routes */}
-                {adminEnabled && (
-                  <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="products" element={<AdminProductsPage />} />
-                    <Route path="orders" element={<AdminOrdersPage />} />
-                    <Route path="boxes" element={<AdminBoxesPage />} />
-                    <Route path="categories" element={<AdminCategoriesPage />} />
-                  </Route>
-                )}
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <StoreProvider>
+            <CartProvider>
+              <Sonner position="top-center" dir="rtl" />
+              <BrowserRouter basename={import.meta.env.BASE_URL}>
+                <Routes>
+                  {/* Admin Routes */}
+                  {adminEnabled && (
+                    <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="products" element={<AdminProductsPage />} />
+                      <Route path="orders" element={<AdminOrdersPage />} />
+                      <Route path="boxes" element={<AdminBoxesPage />} />
+                      <Route path="categories" element={<AdminCategoriesPage />} />
+                    </Route>
+                  )}
 
-                {/* Store Routes */}
-                <Route
-                  path="*"
-                  element={
-                    <>
-                      {!introComplete && <IntroOverlay onComplete={() => setIntroComplete(true)} />}
-                      <div className={introComplete ? "animate-in fade-in duration-500" : "opacity-0"}>
-                        <Navbar />
-                        <CartPanel />
-                        <main className="min-h-screen">
-                          <Routes>
-                            <Route path="/" element={<HomePage />} />
-                            <Route path="/shop" element={<ShopPage />} />
-                            <Route path="/checkout" element={<CheckoutPage />} />
-                            <Route path="/track-order" element={<TrackOrderPage />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </main>
-                        <Footer />
-                      </div>
-                    </>
-                  }
-                />
-              </Routes>
-            </BrowserRouter>
-          </CartProvider>
-        </StoreProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+                  {/* Store Routes */}
+                  <Route
+                    path="*"
+                    element={
+                      <>
+                        {!introComplete && <IntroOverlay onComplete={() => setIntroComplete(true)} />}
+                        <div className={introComplete ? "animate-in fade-in duration-500" : "opacity-0"}>
+                          <Navbar />
+                          <CartPanel />
+                          <main className="min-h-screen">
+                            <Routes>
+                              <Route path="/" element={<HomePage />} />
+                              <Route path="/shop" element={<ShopPage />} />
+                              <Route path="/checkout" element={<CheckoutPage />} />
+                              <Route path="/track-order" element={<TrackOrderPage />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </main>
+                          <Footer />
+                        </div>
+                      </>
+                    }
+                  />
+                </Routes>
+              </BrowserRouter>
+            </CartProvider>
+          </StoreProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
