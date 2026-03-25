@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Product, Box, products as defaultProducts, boxes as defaultBoxes, categories as defaultCategoriesConst } from "@/data/products";
 import { db } from "@/lib/firebase";
-import { collection, deleteDoc, doc, getDocsFromServer, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocsFromServer, onSnapshot, setDoc } from "firebase/firestore";
 
 export interface Order {
   id: string;
@@ -64,13 +64,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const initialize = async () => {
       try {
+        const seedRef = doc(db, "__meta", "seed");
+        const seedDoc = await getDoc(seedRef);
+        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.productsSeeded);
         const serverSnapshot = await getDocsFromServer(productsRef);
-        if (serverSnapshot.empty) {
+        if (!isSeeded && serverSnapshot.empty) {
           await Promise.all(
             defaultProducts.map((product) =>
               setDoc(doc(productsRef, product.id), toFirestorePayload(product), { merge: true }),
             ),
           );
+          await setDoc(seedRef, { productsSeeded: true }, { merge: true });
         }
       } catch (error) {
         console.error("Failed to initialize Firestore products", error);
@@ -110,13 +114,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const initialize = async () => {
       try {
+        const seedRef = doc(db, "__meta", "seed");
+        const seedDoc = await getDoc(seedRef);
+        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.boxesSeeded);
         const serverSnapshot = await getDocsFromServer(boxesRef);
-        if (serverSnapshot.empty) {
+        if (!isSeeded && serverSnapshot.empty) {
           await Promise.all(
             defaultBoxes.map((box) =>
               setDoc(doc(boxesRef, box.id), toFirestorePayload(box), { merge: true }),
             ),
           );
+          await setDoc(seedRef, { boxesSeeded: true }, { merge: true });
         }
       } catch (error) {
         console.error("Failed to initialize Firestore boxes", error);
@@ -156,13 +164,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const initialize = async () => {
       try {
+        const seedRef = doc(db, "__meta", "seed");
+        const seedDoc = await getDoc(seedRef);
+        const isSeeded = seedDoc.exists() && Boolean(seedDoc.data()?.categoriesSeeded);
         const serverSnapshot = await getDocsFromServer(categoriesRef);
-        if (serverSnapshot.empty) {
+        if (!isSeeded && serverSnapshot.empty) {
           await Promise.all(
             defaultCategories.map((category) =>
               setDoc(doc(categoriesRef, category.id), toFirestorePayload(category), { merge: true }),
             ),
           );
+          await setDoc(seedRef, { categoriesSeeded: true }, { merge: true });
         }
       } catch (error) {
         console.error("Failed to initialize Firestore categories", error);
