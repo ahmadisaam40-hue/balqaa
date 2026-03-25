@@ -19,6 +19,7 @@ npm run dev
 ## Firebase Setup
 
 The project is already wired to Firebase through `src/lib/firebase.ts`.
+Data is now Firebase-only (no `localStorage` fallback for products/boxes/categories/orders).
 
 Required environment variables:
 
@@ -42,3 +43,19 @@ Exports available from the Firebase module:
 - `db`
 - `storage`
 - `initFirebaseAnalytics()`
+
+## Firebase Deploy
+
+1. Login once:
+
+```bash
+npm run firebase:login
+```
+
+2. Deploy Firestore rules + Hosting:
+
+```bash
+npm run firebase:deploy
+```
+
+Project is preconfigured in `.firebaserc` as `balqa-cos`.

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Product, Box, products as defaultProducts, boxes as defaultBoxes, categories as defaultCategoriesConst } from "@/data/products";
+import { db } from "@/lib/firebase";
+import { collection, deleteDoc, doc, getDocsFromServer, onSnapshot, setDoc } from "firebase/firestore";
 
 export interface Order {
   id: string;
@@ -42,49 +44,275 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-const STORAGE_KEYS = { products: "balqa_products", boxes: "balqa_boxes", orders: "balqa_orders", categories: "balqa_categories" };
-
-function loadFromStorage<T>(key: string, fallback: T): T {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
+function toFirestorePayload<T>(value: T): T {
+  // Firestore rejects undefined values, so we strip them.
+  return JSON.parse(JSON.stringify(value));
 }
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() => loadFromStorage(STORAGE_KEYS.products, defaultProducts));
-  const [boxes, setBoxes] = useState<Box[]>(() => loadFromStorage(STORAGE_KEYS.boxes, defaultBoxes));
-  const [orders, setOrders] = useState<Order[]>(() => loadFromStorage(STORAGE_KEYS.orders, []));
-  const [categories, setCategories] = useState<Category[]>(() => loadFromStorage(STORAGE_KEYS.categories, defaultCategories));
+  const [products, setProducts] = useState<Product[]>([]);
+  const [boxes, setBoxes] = useState<Box[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(products)); }, [products]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.boxes, JSON.stringify(boxes)); }, [boxes]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(orders)); }, [orders]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.categories, JSON.stringify(categories)); }, [categories]);
+  useEffect(() => {
+    if (!db) return;
 
-  const addProduct = useCallback((p: Product) => setProducts((prev) => [...prev, p]), []);
-  const updateProduct = useCallback((p: Product) => setProducts((prev) => prev.map((x) => (x.id === p.id ? p : x))), []);
-  const deleteProduct = useCallback((id: string) => setProducts((prev) => prev.filter((x) => x.id !== id)), []);
+    const productsRef = collection(db, "products");
+    let isMounted = true;
+    let unsubscribe = () => {};
 
-  const addBox = useCallback((b: Box) => setBoxes((prev) => [...prev, b]), []);
-  const updateBox = useCallback((b: Box) => setBoxes((prev) => prev.map((x) => (x.id === b.id ? b : x))), []);
-  const deleteBox = useCallback((id: string) => setBoxes((prev) => prev.filter((x) => x.id !== id)), []);
+    const initialize = async () => {
+      try {
+        const serverSnapshot = await getDocsFromServer(productsRef);
+        if (serverSnapshot.empty) {
+          await Promise.all(
+            defaultProducts.map((product) =>
+              setDoc(doc(productsRef, product.id), toFirestorePayload(product), { merge: true }),
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to initialize Firestore products", error);
+      }
 
-  const addOrder = useCallback((o: Order) => setOrders((prev) => [...prev, o]), []);
+      if (!isMounted) return;
+
+      unsubscribe = onSnapshot(
+        productsRef,
+        (snapshot) => {
+          const remoteProducts = snapshot.docs.map((item) => ({
+            id: item.id,
+            ...(item.data() as Omit<Product, "id">),
+          }));
+          setProducts(remoteProducts);
+        },
+        (error) => {
+          console.error("Failed to subscribe to Firestore products", error);
+        },
+      );
+    };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
+
+    const boxesRef = collection(db, "boxes");
+    let isMounted = true;
+    let unsubscribe = () => {};
+
+    const initialize = async () => {
+      try {
+        const serverSnapshot = await getDocsFromServer(boxesRef);
+        if (serverSnapshot.empty) {
+          await Promise.all(
+            defaultBoxes.map((box) =>
+              setDoc(doc(boxesRef, box.id), toFirestorePayload(box), { merge: true }),
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to initialize Firestore boxes", error);
+      }
+
+      if (!isMounted) return;
+
+      unsubscribe = onSnapshot(
+        boxesRef,
+        (snapshot) => {
+          const remoteBoxes = snapshot.docs.map((item) => ({
+            id: item.id,
+            ...(item.data() as Omit<Box, "id">),
+          }));
+          setBoxes(remoteBoxes);
+        },
+        (error) => {
+          console.error("Failed to subscribe to Firestore boxes", error);
+        },
+      );
+    };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
+
+    const categoriesRef = collection(db, "categories");
+    let isMounted = true;
+    let unsubscribe = () => {};
+
+    const initialize = async () => {
+      try {
+        const serverSnapshot = await getDocsFromServer(categoriesRef);
+        if (serverSnapshot.empty) {
+          await Promise.all(
+            defaultCategories.map((category) =>
+              setDoc(doc(categoriesRef, category.id), toFirestorePayload(category), { merge: true }),
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to initialize Firestore categories", error);
+      }
+
+      if (!isMounted) return;
+
+      unsubscribe = onSnapshot(
+        categoriesRef,
+        (snapshot) => {
+          const remoteCategories = snapshot.docs.map((item) => ({
+            id: item.id,
+            ...(item.data() as Omit<Category, "id">),
+          }));
+          setCategories(remoteCategories);
+        },
+        (error) => {
+          console.error("Failed to subscribe to Firestore categories", error);
+        },
+      );
+    };
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
+
+    const ordersRef = collection(db, "orders");
+
+    const unsubscribe = onSnapshot(
+      ordersRef,
+      (snapshot) => {
+        const remoteOrders = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...(item.data() as Omit<Order, "id">),
+        }));
+        setOrders(remoteOrders);
+      },
+      (error) => {
+        console.error("Failed to subscribe to Firestore orders", error);
+      },
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const addProduct = useCallback((p: Product) => {
+    setProducts((prev) => [...prev, p]);
+
+    if (!db) return;
+    setDoc(doc(db, "products", p.id), toFirestorePayload(p), { merge: true }).catch((error) => {
+      console.error("Failed to add product in Firestore", error);
+    });
+  }, []);
+
+  const updateProduct = useCallback((p: Product) => {
+    setProducts((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+
+    if (!db) return;
+    setDoc(doc(db, "products", p.id), toFirestorePayload(p), { merge: true }).catch((error) => {
+      console.error("Failed to update product in Firestore", error);
+    });
+  }, []);
+
+  const deleteProduct = useCallback((id: string) => {
+    setProducts((prev) => prev.filter((x) => x.id !== id));
+
+    if (!db) return;
+    deleteDoc(doc(db, "products", id)).catch((error) => {
+      console.error("Failed to delete product in Firestore", error);
+    });
+  }, []);
+
+  const addBox = useCallback((b: Box) => {
+    setBoxes((prev) => [...prev, b]);
+
+    if (!db) return;
+    setDoc(doc(db, "boxes", b.id), toFirestorePayload(b), { merge: true }).catch((error) => {
+      console.error("Failed to add box in Firestore", error);
+    });
+  }, []);
+
+  const updateBox = useCallback((b: Box) => {
+    setBoxes((prev) => prev.map((x) => (x.id === b.id ? b : x)));
+
+    if (!db) return;
+    setDoc(doc(db, "boxes", b.id), toFirestorePayload(b), { merge: true }).catch((error) => {
+      console.error("Failed to update box in Firestore", error);
+    });
+  }, []);
+
+  const deleteBox = useCallback((id: string) => {
+    setBoxes((prev) => prev.filter((x) => x.id !== id));
+
+    if (!db) return;
+    deleteDoc(doc(db, "boxes", id)).catch((error) => {
+      console.error("Failed to delete box in Firestore", error);
+    });
+  }, []);
+
+  const addOrder = useCallback((o: Order) => {
+    setOrders((prev) => [...prev, o]);
+
+    if (!db) return;
+    setDoc(doc(db, "orders", o.id), toFirestorePayload(o), { merge: true }).catch((error) => {
+      console.error("Failed to add order in Firestore", error);
+    });
+  }, []);
+
   const updateOrderStatus = useCallback((id: string, status: Order["status"]) => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+
+    if (!db) return;
+    setDoc(doc(db, "orders", id), toFirestorePayload({ status }), { merge: true }).catch((error) => {
+      console.error("Failed to update order status in Firestore", error);
+    });
   }, []);
 
   const addCategory = useCallback((name: string) => {
-    setCategories((prev) => [...prev, { id: "cat" + Date.now(), name }]);
+    const category = { id: "cat" + Date.now(), name };
+    setCategories((prev) => [...prev, category]);
+
+    if (!db) return;
+    setDoc(doc(db, "categories", category.id), toFirestorePayload(category), { merge: true }).catch((error) => {
+      console.error("Failed to add category in Firestore", error);
+    });
   }, []);
+
   const updateCategory = useCallback((id: string, name: string) => {
     setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)));
+
+    if (!db) return;
+    setDoc(doc(db, "categories", id), toFirestorePayload({ name }), { merge: true }).catch((error) => {
+      console.error("Failed to update category in Firestore", error);
+    });
   }, []);
+
   const deleteCategory = useCallback((id: string) => {
     setCategories((prev) => prev.filter((c) => c.id !== id));
+
+    if (!db) return;
+    deleteDoc(doc(db, "categories", id)).catch((error) => {
+      console.error("Failed to delete category in Firestore", error);
+    });
   }, []);
 
   return (

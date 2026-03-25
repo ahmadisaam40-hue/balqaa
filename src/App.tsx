@@ -34,7 +34,7 @@ const App = () => {
         <StoreProvider>
           <CartProvider>
             <Sonner position="top-center" dir="rtl" />
-            <BrowserRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
               <Routes>
                 {/* Admin Routes */}
                 {adminEnabled && (
