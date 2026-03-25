@@ -21,31 +21,42 @@ const AdminCategoriesPage = () => {
     setShowForm(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error("يرجى إدخال اسم الفئة");
       return;
     }
 
-    if (editingId) {
-      updateCategory(editingId, name.trim());
-      toast.success("تم تعديل الفئة بنجاح");
-    } else {
-      addCategory(name.trim());
-      toast.success("تمت إضافة الفئة بنجاح");
+    try {
+      if (editingId) {
+        await updateCategory(editingId, name.trim());
+        toast.success("تم تعديل الفئة بنجاح");
+      } else {
+        await addCategory(name.trim());
+        toast.success("تمت إضافة الفئة بنجاح");
+      }
+      setShowForm(false);
+    } catch (error) {
+      console.error("Category mutation failed", error);
+      toast.error("فشل حفظ الفئة في Firebase");
     }
-    setShowForm(false);
   };
 
-  const handleDelete = (id: string, catName: string) => {
+  const handleDelete = async (id: string, catName: string) => {
     const usedCount = products.filter((p) => p.category === catName).length;
     if (usedCount > 0) {
       toast.error(`لا يمكن حذف الفئة، هناك ${usedCount} منتج مرتبط بها`);
       return;
     }
-    deleteCategory(id);
-    toast.success("تم حذف الفئة");
+
+    try {
+      await deleteCategory(id);
+      toast.success("تم حذف الفئة");
+    } catch (error) {
+      console.error("Category delete failed", error);
+      toast.error("فشل حذف الفئة من Firebase");
+    }
   };
 
   return (

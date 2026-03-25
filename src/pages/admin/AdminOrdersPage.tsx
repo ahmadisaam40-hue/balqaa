@@ -16,9 +16,14 @@ const statusColors: Record<string, string> = {
 const AdminOrdersPage = () => {
   const { orders, updateOrderStatus } = useStore();
 
-  const handleStatusChange = (id: string, status: Order["status"]) => {
-    updateOrderStatus(id, status);
-    toast.success("تم تحديث حالة الطلب");
+  const handleStatusChange = async (id: string, status: Order["status"]) => {
+    try {
+      await updateOrderStatus(id, status);
+      toast.success("تم تحديث حالة الطلب");
+    } catch (error) {
+      console.error("Order status update failed", error);
+      toast.error("فشل تحديث حالة الطلب في Firebase");
+    }
   };
 
   return (

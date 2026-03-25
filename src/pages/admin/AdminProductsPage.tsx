@@ -49,24 +49,34 @@ const AdminProductsPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error("يرجى إدخال اسم المنتج"); return; }
     if (form.price <= 0) { toast.error("يرجى إدخال سعر صحيح"); return; }
 
-    if (editingId) {
-      updateProduct({ ...form, id: editingId });
-      toast.success("تم تعديل المنتج بنجاح");
-    } else {
-      addProduct({ ...form, id: Date.now().toString() });
-      toast.success("تمت إضافة المنتج بنجاح");
+    try {
+      if (editingId) {
+        await updateProduct({ ...form, id: editingId });
+        toast.success("تم تعديل المنتج بنجاح");
+      } else {
+        await addProduct({ ...form, id: Date.now().toString() });
+        toast.success("تمت إضافة المنتج بنجاح");
+      }
+      setShowForm(false);
+    } catch (error) {
+      console.error("Product mutation failed", error);
+      toast.error("فشل حفظ المنتج في Firebase");
     }
-    setShowForm(false);
   };
 
-  const handleDelete = (id: string) => {
-    deleteProduct(id);
-    toast.success("تم حذف المنتج");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProduct(id);
+      toast.success("تم حذف المنتج");
+    } catch (error) {
+      console.error("Product delete failed", error);
+      toast.error("فشل حذف المنتج من Firebase");
+    }
   };
 
   return (

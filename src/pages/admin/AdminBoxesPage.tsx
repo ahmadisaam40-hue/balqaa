@@ -56,7 +56,7 @@ const AdminBoxesPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error("يرجى إدخال اسم البوكس"); return; }
     if (selectedProductIds.length === 0) { toast.error("يرجى اختيار منتج واحد على الأقل"); return; }
@@ -65,14 +65,29 @@ const AdminBoxesPage = () => {
     const itemNames = products.filter((p) => selectedProductIds.includes(p.id)).map((p) => p.name);
     const box = { ...form, items: itemNames };
 
-    if (editingId) {
-      updateBox({ ...box, id: editingId });
-      toast.success("تم تعديل البوكس بنجاح");
-    } else {
-      addBox({ ...box, id: "b" + Date.now().toString() });
-      toast.success("تمت إضافة البوكس بنجاح");
+    try {
+      if (editingId) {
+        await updateBox({ ...box, id: editingId });
+        toast.success("تم تعديل البوكس بنجاح");
+      } else {
+        await addBox({ ...box, id: "b" + Date.now().toString() });
+        toast.success("تمت إضافة البوكس بنجاح");
+      }
+      setShowForm(false);
+    } catch (error) {
+      console.error("Box mutation failed", error);
+      toast.error("فشل حفظ البوكس في Firebase");
     }
-    setShowForm(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBox(id);
+      toast.success("تم حذف البوكس");
+    } catch (error) {
+      console.error("Box delete failed", error);
+      toast.error("فشل حذف البوكس من Firebase");
+    }
   };
 
   return (
@@ -103,7 +118,7 @@ const AdminBoxesPage = () => {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => openEdit(b)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"><Pencil className="w-4 h-4" /></button>
-                <button onClick={() => { deleteBox(b.id); toast.success("تم حذف البوكس"); }} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(b.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           );

@@ -34,27 +34,33 @@ const CheckoutPage = () => {
       } catch { /* optional */ }
     }
 
-    addOrder({
-      id: orderId,
-      name: name.trim(),
-      phone: phone.trim(),
-      items: items.map((i) => ({
-        productId: i.product.id,
-        productName: i.product.name,
-        quantity: i.quantity,
-        price: calculateFinalPrice(i.product.price, i.product.hasDiscount, i.product.discountType, i.product.discountValue),
-      })),
-      total: totalPrice,
-      status: "قيد الانتظار",
-      deliveryMethod: delivery,
-      location,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await addOrder({
+        id: orderId,
+        name: name.trim(),
+        phone: phone.trim(),
+        items: items.map((i) => ({
+          productId: i.product.id,
+          productName: i.product.name,
+          quantity: i.quantity,
+          price: calculateFinalPrice(i.product.price, i.product.hasDiscount, i.product.discountType, i.product.discountValue),
+        })),
+        total: totalPrice,
+        status: "قيد الانتظار",
+        deliveryMethod: delivery,
+        location,
+        createdAt: new Date().toISOString(),
+      });
 
-    toast.success(`تم إرسال طلبك بنجاح! رقم الطلب: ${orderId}`);
-    clearCart();
-    setLoading(false);
-    navigate("/track-order");
+      toast.success(`تم إرسال طلبك بنجاح! رقم الطلب: ${orderId}`);
+      clearCart();
+      navigate("/track-order");
+    } catch (error) {
+      console.error("Checkout order creation failed", error);
+      toast.error("فشل إرسال الطلب، تحقق من الاتصال بقاعدة البيانات");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (items.length === 0) {
