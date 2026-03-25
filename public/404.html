@@ -2,15 +2,21 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <title>صيدلية البلقاء</title>
     <script>
-      // Store the requested path
-      const path = location.pathname.replace('/balqaa', '');
-      sessionStorage.redirect = path;
+      // Get the current path and redirect to index.html with hash routing
+      var segment = location.pathname.split('/').slice(1);
+      
+      // Build the full path after /balqaa/
+      var path = '/' + segment.slice(1).join('/');
+      
+      // Store the path in localStorage for the app to use
+      sessionStorage.redirect = path || '/';
+      
+      // Redirect to the base URL (index.html)
+      location.replace('/balqaa/');
     </script>
-    <!-- Redirect to index.html while preserving the path -->
-    <meta http-equiv="refresh" content="0;URL='/balqaa/'" />
   </head>
   <body>
-    Redirecting...
   </body>
 </html>
