@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
@@ -40,7 +40,7 @@ const App = () => {
           <StoreProvider>
             <CartProvider>
               <Sonner position="top-center" dir="rtl" />
-              <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <HashRouter>
                 <Routes>
                   {/* Admin Routes */}
                   {adminEnabled && (
@@ -77,7 +77,7 @@ const App = () => {
                     }
                   />
                 </Routes>
-              </BrowserRouter>
+              </HashRouter>
             </CartProvider>
           </StoreProvider>
         </TooltipProvider>
